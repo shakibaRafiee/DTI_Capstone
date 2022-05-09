@@ -7,11 +7,9 @@ import dill
 import folium
 from streamlit_folium import folium_static
 
-'''
+
 ################################################## function ##################################################
 @st.cache(allow_output_mutation=True)
-'''
-
 def load_graph():
     graph = dill.load(open('../San_Francisco/SanFrancisco_prediction_Graph.pkd', 'rb'))
     return graph
