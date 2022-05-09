@@ -15,6 +15,15 @@ def weighted_sum(point1, point2, atr):
     # normalize the populairy by multiplying by length and also factor other features
     return  atr[0]['length']*0.01 + 2*(2*(1-atr[0]['RF_model_pred_sg'])*(atr[0]['length'])/100)
 
+def find_optimal_path_in_range():
+    # Find routes with minimum badness to the chosen destination nodes in range of orig
+    Min_badness_inRange = { key: Min_badness[key] for key in Destination_nodes}
+
+    # Find and filter acceptable target points in range of desired distance
+    Final_Destination_nodes =[key for key, value in Min_badness_inRange.items() if value ==min(Min_badness_inRange.values())]
+
+    return Final_Destination_nodes
+
 ###############################################################################################################
 
 st.title('RunLikeU')
