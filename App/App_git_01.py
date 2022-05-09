@@ -88,7 +88,13 @@ def folium_plot(Cycle, dest):
     return cycle_graph_map
 ###############################################################################################################
 
-st.title('RunLikeU')
+col1, col2 = st.columns(2)
+
+with col1:
+    st.image('logo.png')
+
+with col2:
+    st.title('RunLikeU')
 
 graph = load_graph()
 
