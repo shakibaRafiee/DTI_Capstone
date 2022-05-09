@@ -130,3 +130,5 @@ dest1 = Final_Destination_nodes[0]
 ################################################# find route1 ##################################################
 Cycle1, dest1 = find_rout(dest1)
 cycle_graph_map1 = folium_plot(Cycle1, dest1)
+folium_static(cycle_graph_map1,height= 300)
+route1_state.text('Found a great route :)')
