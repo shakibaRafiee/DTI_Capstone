@@ -1,6 +1,8 @@
 import streamlit as st
 import dill
 
+import osmnx as ox
+
 st.title('RunLikeU')
 
 @st.cache(allow_output_mutation=True)
