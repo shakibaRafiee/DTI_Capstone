@@ -132,3 +132,23 @@ Cycle1, dest1 = find_rout(dest1)
 cycle_graph_map1 = folium_plot(Cycle1, dest1)
 folium_static(cycle_graph_map1,height= 300)
 route1_state.text('Found a great route :)')
+
+################################################# find route2 ##################################################
+route2_state = st.text('Finding routes...')
+
+Destination_nodes.remove(dest1)
+dest2 = find_optimal_path_in_range()[0]
+Cycle2, dest2 = find_rout(dest2)
+cycle_graph_map2 = folium_plot(Cycle2, dest2)
+folium_static(cycle_graph_map2, height= 300)
+route2_state.text("Here's another route")
+
+################################################# find route3 ##################################################
+route3_state = st.text('Finding routes...')
+
+Destination_nodes.remove(dest2)
+dest3 = find_optimal_path_in_range()[0]
+Cycle3, dest3 = find_rout(dest3)
+cycle_graph_map3 = folium_plot(Cycle3, dest3)
+folium_static(cycle_graph_map3, height= 300)
+route3_state.text("How about this one?")
