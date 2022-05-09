@@ -10,9 +10,12 @@ from streamlit_folium import folium_static
 '''
 ################################################## function ##################################################
 @st.cache(allow_output_mutation=True)
+'''
+
 def load_graph():
     graph = dill.load(open('../San_Francisco/SanFrancisco_prediction_Graph.pkd', 'rb'))
     return graph
+'''
 
 def weighted_sum(point1, point2, atr):
     # normalize the populairy by multiplying by length and also factor other features
@@ -89,11 +92,11 @@ def folium_plot(Cycle, dest):
 ###############################################################################################################
 '''
 st.title('RunLikeU')
-'''
+
 # load Sanfrancisco graph
 graph = load_graph()
 
-
+'''
 ################################################# User Inputs ##################################################
 
 # Get street address as text_input
