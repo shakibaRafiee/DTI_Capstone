@@ -92,6 +92,7 @@ st.title('RunLikeU')
 # load Sanfrancisco graph
 graph = load_graph()
 
+'''
 ################################################# User Inputs ##################################################
 
 # Get street address as text_input
@@ -151,3 +152,4 @@ Cycle3, dest3 = find_rout(dest3)
 cycle_graph_map3 = folium_plot(Cycle3, dest3)
 folium_static(cycle_graph_map3, height= 300)
 route3_state.text("How about this one?")
+'''
