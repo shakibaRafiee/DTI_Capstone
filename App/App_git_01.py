@@ -4,6 +4,9 @@ import dill
 import networkx as nx
 import osmnx as ox
 
+import folium
+from streamlit_folium import folium_static
+
 ################################################## function ###################################################
 
 @st.cache(allow_output_mutation=True)
@@ -52,6 +55,37 @@ def find_rout(dest):
     Cycle = route_1+route_2[1:-1]
 
     return Cycle, dest
+
+def folium_plot(Cycle, dest):
+    Location_orig= [graph.nodes[orig]['y'], graph.nodes[orig]['x']]
+    Location_dest= [graph.nodes[dest]['y'], graph.nodes[dest]['x']]
+
+    length = nx.path_weight(graph, Cycle, weight="length")/(1.60934 * 1000)
+    cross = nx.path_weight(graph, Cycle, weight="trafic signals")
+
+    html_orig=  "<p> <b> <small> Start Point </small> </b> </p>"
+
+    html_dest=  f"""
+                <p> <b> <small> Destination Point </small> </b> </p>
+                <p> <small> Route Length:{length:.2f} miles </small> </p>
+                <p> <small> Traffic Signals: {int(cross/2):.0f} </small> </p>
+                """
+
+    iframe_orig = folium.IFrame(html=html_orig, width=150, height=50)
+    popup_orig  = folium.Popup(iframe_orig, max_width=150)
+
+    iframe_dest = folium.IFrame(html=html_dest, width=150, height=100)
+    popup_dest  = folium.Popup(iframe_dest, max_width=150)
+
+    marker_orig = folium.Marker(location = Location_orig, popup = popup_orig, icon = folium.Icon(color='green'))
+    marker_dest = folium.Marker(location = Location_dest, popup = popup_dest, icon = folium.Icon(color='green'))
+
+    cycle_graph_map = ox.plot_route_folium(graph, Cycle, color='lightgreen',opacity=0.8, weight=8)
+
+    marker_orig.add_to(cycle_graph_map)
+    marker_dest.add_to(cycle_graph_map)
+
+    return cycle_graph_map
 ###############################################################################################################
 
 st.title('RunLikeU')
