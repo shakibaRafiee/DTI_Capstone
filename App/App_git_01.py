@@ -1,6 +1,7 @@
 import streamlit as st
 import dill
 
+import networkx as nx
 import osmnx as ox
 
 ################################################## function ###################################################
@@ -37,3 +38,10 @@ st.write('The current desired running distance is', Running_length, 'miles')
 Running_Dist = Running_length * 1.60934 * 1000 / 2
 
 ################################################# find routes ##################################################
+
+route1_state = st.text('Finding routes...')
+
+# Find the shortest path between origin and all nodes (to disregarad nodes where the shortest path is longer than desired length)
+Shortest_Lengths = nx.shortest_path_length(graph, orig, weight='length')
+e = 200 # error (in m)
+Destination_nodes = [key for key, value in Shortest_Lengths.items() if (Running_Dist-e)< value <(Running_Dist+e/4)]
