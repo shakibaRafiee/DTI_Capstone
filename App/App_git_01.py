@@ -45,3 +45,11 @@ route1_state = st.text('Finding routes...')
 Shortest_Lengths = nx.shortest_path_length(graph, orig, weight='length')
 e = 200 # error (in m)
 Destination_nodes = [key for key, value in Shortest_Lengths.items() if (Running_Dist-e)< value <(Running_Dist+e/4)]
+
+#Find the path with min badness between origin and all nodes
+Min_badness = nx.shortest_path_length(graph, orig, weight=weighted_sum)
+
+Final_Destination_nodes = find_optimal_path_in_range()
+dest1 = Final_Destination_nodes[0]
+
+################################################# find route1 ##################################################
