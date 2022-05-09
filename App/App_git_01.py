@@ -11,6 +11,10 @@ def load_graph():
     graph = dill.load(open('./San_Francisco/SanFrancisco_prediction_Graph.pkd', 'rb'))
     return graph
 
+def weighted_sum(point1, point2, atr):
+    # normalize the populairy by multiplying by length and also factor other features
+    return  atr[0]['length']*0.01 + 2*(2*(1-atr[0]['RF_model_pred_sg'])*(atr[0]['length'])/100)
+
 ###############################################################################################################
 
 st.title('RunLikeU')
