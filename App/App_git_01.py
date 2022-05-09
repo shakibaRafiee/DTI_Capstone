@@ -9,3 +9,13 @@ def load_graph():
     return graph
 
 graph = load_graph()
+
+# Get street address as text_input
+address = st.text_input('Start Location', 'Haight-Ashbury, San Francisco, CA, USA')
+st.write('The current start location is', address)
+
+address_state = st.text('Finding location...')
+
+# find the origin node index
+G_simple = ox.graph_from_address(address, dist=50, network_type='walk')
+orig = list(G_simple.nodes)[0]
