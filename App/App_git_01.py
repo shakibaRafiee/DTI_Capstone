@@ -24,6 +24,34 @@ def find_optimal_path_in_range():
 
     return Final_Destination_nodes
 
+def find_rout(dest):
+    while True:
+        # find the path to dest that minimises length
+        route_1 = nx.shortest_path(graph, orig, dest, weight=weighted_sum)
+
+        # revise the graph and remove edges
+        graph2 = graph.copy()
+        edges_to_remove = [(u,v) for (u,v,edg) in graph2.edges(data=True) if (u in route_1[2:-2] or v in route_1[2:-2])]
+        graph2.remove_edges_from(edges_to_remove)
+
+        # find the path from dest that minimizes badness
+        try:
+            route_2 = nx.shortest_path(graph2, dest, orig, weight=weighted_sum)
+            break
+        except nx.NetworkXNoPath:
+            print('No path, lets try again')
+
+        Destination_nodes.remove(dest)
+        dest = find_optimal_path_in_range()[0]
+        find_rout(dest)
+
+    # update the graph
+    graph2.add_edges_from(edges_to_remove)
+
+    # Route
+    Cycle = route_1+route_2[1:-1]
+
+    return Cycle, dest
 ###############################################################################################################
 
 st.title('RunLikeU')
@@ -66,3 +94,4 @@ Final_Destination_nodes = find_optimal_path_in_range()
 dest1 = Final_Destination_nodes[0]
 
 ################################################# find route1 ##################################################
+Cycle1, dest1 = find_rout(dest1)
