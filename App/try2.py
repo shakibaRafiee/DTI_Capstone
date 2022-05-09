@@ -7,6 +7,7 @@ import dill
 import folium
 from streamlit_folium import folium_static
 
+'''
 ################################################## function ##################################################
 @st.cache(allow_output_mutation=True)
 def load_graph():
@@ -86,13 +87,13 @@ def folium_plot(Cycle, dest):
 
     return cycle_graph_map
 ###############################################################################################################
-
+'''
 st.title('RunLikeU')
-
+'''
 # load Sanfrancisco graph
 graph = load_graph()
 
-'''
+
 ################################################# User Inputs ##################################################
 
 # Get street address as text_input
