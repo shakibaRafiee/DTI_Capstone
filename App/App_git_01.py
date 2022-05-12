@@ -11,12 +11,23 @@ from streamlit_folium import folium_static
 
 @st.cache(allow_output_mutation=True)
 def load_graph():
-    graph = dill.load(open('./San_Francisco/SanFrancisco_prediction_Graph.pkd', 'rb'))
+    #graph = dill.load(open('./San_Francisco/SanFrancisco_prediction_Graph.pkd', 'rb'))
+    graph = dill.load(open('./San_Francisco/SanFrancisco_prediction_Graph_capped20.pkd', 'rb'))
+
     return graph
 
 def weighted_sum(point1, point2, atr):
-    # normalize the populairy by multiplying by length and also factor other features
-    return  atr[0]['length']*0.01 + 2*(2*(1-atr[0]['RF_model_pred_sg'])*(atr[0]['length'])/100)
+    # normalize the costs
+    pop_cost    = 1 - (atr[0]['popularity_pred'])*0.05
+    parks_cost  = 1 - (atr[0]['parks_recs'])
+    lights_cost = 1 - (atr[0]['parks_recs'])*0.5
+    safty_cost  =     (atr[0]['parks_recs'])
+    length_cost =     (atr[0]['length'])/2775
+
+    # normalize the populairy by multiplying by length
+    w_l = (atr[0]['length']) # length weight
+
+    return  length_cost + w_l*(pop_cost + (w_parks*parks_cost/10) + (w_lights*lights_cost/10) + (w_safety*safty_cost/10))
 
 def find_optimal_path_in_range():
     # Find routes with minimum badness to the chosen destination nodes in range of orig
@@ -95,7 +106,7 @@ graph = load_graph()
 ################################################# User Inputs ##################################################
 
 # Get street address as text_input
-address = st.text_input('Start Location', 'Haight-Ashbury, San Francisco, CA, USA')
+address = st.text_input('Start Location (currently only avaiable in San Francisco)', 'Haight-Ashbury, San Francisco, CA, USA')
 st.write('The current start location is', address)
 
 address_state = st.text('Finding location...')
@@ -105,6 +116,15 @@ G_simple = ox.graph_from_address(address, dist=50, network_type='walk')
 orig = list(G_simple.nodes)[0]
 
 address_state.text("Found the address!")
+st.text("")
+st.text("Safety is my first priority. What do you prioritize?")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    w_safety           = st.slider('From 1 to 10 how much do you prioritize safty of the route?', 1, 10, 7)
+    w_parks           = st.slider('From 1 to 10 how much do you prioritize the green space?', 1, 10, 5)
+    w_lights   = st.slider('From 1 to 10 how much do you prioritize avoiding traffic lights?', 1, 10, 5)
 
 # Get running distance as number_input
 Running_length = st.number_input(label = 'Desired Running Distance (in miles)', min_value = 0.5, value = 3.0, step = 0.5, format="%.1f")
