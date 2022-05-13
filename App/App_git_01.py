@@ -25,7 +25,7 @@ def weighted_sum(point1, point2, atr):
     length_cost =     (atr[0]['length'])/2775
 
     # normalize the populairy by multiplying by length
-    w_l = (atr[0]['length']) # length weight
+    w_l = (atr[0]['length'])/2775 # length weight
 
     return  length_cost + w_l*(pop_cost + (w_parks*parks_cost/10) + (w_lights*lights_cost/10) + (w_safety*safty_cost/10))
 
@@ -61,7 +61,7 @@ def find_rout(dest):
 
     graph2.add_edges_from(edges_to_remove)
     for edge in edges_to_remove:
-        graph.add_edge(*edge, key=0, popularity_pred = graph.get_edge_data(*edge)[0]['popularity_pred']-5)
+        graph.add_edge(*edge, key=0, popularity_pred = graph.get_edge_data(*edge)[0]['popularity_pred']-3)
     # Route
     Cycle = route_1+route_2[1:-1]
 
@@ -113,7 +113,6 @@ def folium_plot(Cycle, dest):
 st.title('RunLikeU')
 
 graph_orig = load_graph()
-graph = graph_orig.copy()
 
 ################################################# User Inputs ##################################################
 
