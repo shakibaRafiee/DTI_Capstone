@@ -20,14 +20,14 @@ def weighted_sum(point1, point2, atr):
     # normalize the costs
     pop_cost    = 1 - (atr[0]['popularity_pred'])*0.05
     parks_cost  = 1 - (atr[0]['parks_recs'])
-    lights_cost = 1 - (atr[0]['parks_recs'])*0.5
-    safty_cost  =     (atr[0]['parks_recs'])
+    lights_cost =     (atr[0]['trafic signals'])*0.5
+    safty_cost  =     (atr[0]['crime'])
     length_cost =     (atr[0]['length'])/2775
 
     # normalize the populairy by multiplying by length
     w_l = (atr[0]['length']) # length weight
 
-    return  length_cost + w_l*(2*pop_cost + (w_parks*parks_cost/10) + (w_lights*lights_cost/10) + (w_safety*safty_cost/10))
+    return  length_cost + w_l*(pop_cost + (w_parks*parks_cost/10) + (w_lights*lights_cost/10) + (w_safety*safty_cost/10))
 
 def find_optimal_path_in_range():
     # Find routes with minimum badness to the chosen destination nodes in range of orig
@@ -59,11 +59,14 @@ def find_rout(dest):
         dest = find_optimal_path_in_range()[0]
         find_rout(dest)
 
-    # update the graph
     graph2.add_edges_from(edges_to_remove)
-
+    for edge in edges_to_remove:
+        graph.add_edge(*edge, key=0, popularity_pred = graph.get_edge_data(*edge)[0]['popularity_pred']-5)
     # Route
     Cycle = route_1+route_2[1:-1]
+
+    # update the graph to discourage repetittion
+    edges_to_update = [(u,v) for (u,v,edg) in graph2.edges(data=True) if (u in Cycle[2:-2] or v in route_1[2:-2])]
 
     return Cycle, dest
 
@@ -77,25 +80,27 @@ def folium_plot(Cycle, dest):
     Location_orig= [graph.nodes[orig]['y'], graph.nodes[orig]['x']]
     Location_dest= [graph.nodes[dest]['y'], graph.nodes[dest]['x']]
 
-    length = nx.path_weight(graph, Cycle, weight="length")/(1.60934 * 1000)
-    cross = nx.path_weight(graph, Cycle, weight="trafic signals")
+    length      = nx.path_weight(graph, Cycle, weight="length")/(1.60934 * 1000)
+    crime_index = nx.path_weight(graph, Cycle, weight="crime")/length
+    cross       = nx.path_weight(graph, Cycle, weight="trafic signals")
 
     html_orig=  "<p> <b> <small> Start Point </small> </b> </p>"
 
     html_dest=  f"""
                 <p> <b> <small> Destination Point </small> </b> </p>
                 <p> <small> Route Length:{length:.2f} miles </small> </p>
+                <p> <small> Crime Index:{crime_index:.2f} </small> </p>
                 <p> <small> Traffic Signals: {int(cross/2):.0f} </small> </p>
                 """
 
     iframe_orig = folium.IFrame(html=html_orig, width=150, height=50)
     popup_orig  = folium.Popup(iframe_orig, max_width=150)
 
-    iframe_dest = folium.IFrame(html=html_dest, width=150, height=100)
+    iframe_dest = folium.IFrame(html=html_dest, width=150, height=150)
     popup_dest  = folium.Popup(iframe_dest, max_width=150)
 
     marker_orig = folium.Marker(location = Location_orig, popup = popup_orig, icon = folium.Icon(color='green'))
-    marker_dest = folium.Marker(location = Location_dest, popup = popup_dest, icon = folium.Icon(color='green'))
+    marker_dest = folium.Marker(location = Location_dest, popup = popup_dest, icon = folium.Icon(color='red'))
 
     cycle_graph_map = ox.plot_route_folium(graph, Cycle, color='lightgreen',opacity=0.8, weight=8)
 
@@ -107,7 +112,8 @@ def folium_plot(Cycle, dest):
 
 st.title('RunLikeU')
 
-graph = load_graph()
+graph_orig = load_graph()
+graph = graph_orig.copy()
 
 ################################################# User Inputs ##################################################
 
@@ -129,13 +135,14 @@ st.text("")
 # Get running distance as number_input
 Running_length = st.number_input(label = 'Desired Running Distance (in miles)', min_value = 0.5, value = 3.0, step = 0.5, format="%.1f")
 st.write('The current desired running distance is', Running_length, 'miles')
+
 # convert running distanc to m
 Running_Dist = Running_length * 1.60934 * 1000 / 2
 
 st.text("")
 st.text("")
 
-st.text("Safety is my first priority. What do you prioritize?")
+st.markdown("Safety is my first priority. What do you prioritize?")
 
 col1, col2 = st.columns(2)
 
@@ -144,43 +151,41 @@ with col1:
     w_parks    = st.slider('From 1 to 10 how much do you prioritize the green space?', 1, 10, 5)
     w_lights   = st.slider('From 1 to 10 how much do you prioritize avoiding traffic lights?', 1, 10, 5)
 
-################################################# find routes ##################################################
+if st.button('Find Routs'):
+     graph = graph_orig.copy()
+     ################################################# find routes ##################################################
 
-route1_state = st.text('Finding routes...')
+     route1_state = st.text('Finding routes...')
 
-# Find the shortest path between origin and all nodes (to disregarad nodes where the shortest path is longer than desired length)
-Shortest_Lengths = nx.shortest_path_length(graph, orig, weight='length')
-e = 200 # error (in m)
-Destination_nodes = [key for key, value in Shortest_Lengths.items() if (Running_Dist-e)< value <(Running_Dist+e/4)]
+     # Find the shortest path between origin and all nodes (to disregarad nodes where the shortest path is longer than desired length)
+     Shortest_Lengths = nx.shortest_path_length(graph, orig, weight='length')
+     e = 200 # error (in m)
+     Destination_nodes = [key for key, value in Shortest_Lengths.items() if (Running_Dist-e)< value <(Running_Dist+e/4)]
 
-#Find the path with min badness between origin and all nodes
-Min_badness = nx.shortest_path_length(graph, orig, weight=weighted_sum)
+     #Find the path with min badness between origin and all nodes
+     Min_badness = nx.shortest_path_length(graph, orig, weight=weighted_sum)
 
-Final_Destination_nodes = find_optimal_path_in_range()
-dest1 = Final_Destination_nodes[0]
+     Final_Destination_nodes = find_optimal_path_in_range()
+     dest1 = Final_Destination_nodes[0]
 
-################################################# find route1 ##################################################
-Cycle1, dest1 = find_rout(dest1)
-cycle_graph_map1 = folium_plot(Cycle1, dest1)
-folium_static(cycle_graph_map1,height= 300)
-route1_state.text('Found a great route :)')
-
-################################################# find route2 ##################################################
-route2_state = st.text('Finding routes...')
-
-Destination_nodes = update_destination_nodes(Destination_nodes, dest1)
-dest2 = find_optimal_path_in_range()[0]
-Cycle2, dest2 = find_rout(dest2)
-cycle_graph_map2 = folium_plot(Cycle2, dest2)
-folium_static(cycle_graph_map2, height= 300)
-route2_state.text("Here's another route")
-
-################################################# find route3 ##################################################
-route3_state = st.text('Finding routes...')
-
-Destination_nodes = update_destination_nodes(Destination_nodes, dest2)
-dest3 = find_optimal_path_in_range()[0]
-Cycle3, dest3 = find_rout(dest3)
-cycle_graph_map3 = folium_plot(Cycle3, dest3)
-folium_static(cycle_graph_map3, height= 300)
-route3_state.text("How about this one?")
+     ################################################# find route1 ##################################################
+     Cycle1, dest1 = find_rout(dest1)
+     cycle_graph_map1 = folium_plot(Cycle1, dest1)
+     folium_static(cycle_graph_map1,height= 300)
+     route1_state.text('Found a great route :)')
+     ################################################# find route2 ##################################################
+     route2_state = st.text('Finding routes...')
+     Destination_nodes = update_destination_nodes(Destination_nodes, dest1)
+     dest2 = find_optimal_path_in_range()[0]
+     Cycle2, dest2 = find_rout(dest2)
+     cycle_graph_map2 = folium_plot(Cycle2, dest2)
+     folium_static(cycle_graph_map2, height= 300)
+     route2_state.text("Here's another route")
+     ################################################# find route3 ##################################################
+     route3_state = st.text('Finding routes...')
+     Destination_nodes = update_destination_nodes(Destination_nodes, dest2)
+     dest3 = find_optimal_path_in_range()[0]
+     Cycle3, dest3 = find_rout(dest3)
+     cycle_graph_map3 = folium_plot(Cycle3, dest3)
+     folium_static(cycle_graph_map3, height= 300)
+     route3_state.text("How about this one?")
