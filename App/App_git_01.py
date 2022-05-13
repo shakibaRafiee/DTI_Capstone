@@ -27,7 +27,7 @@ def weighted_sum(point1, point2, atr):
     # normalize the populairy by multiplying by length
     w_l = (atr[0]['length']) # length weight
 
-    return  length_cost + w_l*(pop_cost + (w_parks*parks_cost/10) + (w_lights*lights_cost/10) + (w_safety*safty_cost/10))
+    return  length_cost + w_l*(2*pop_cost + (w_parks*parks_cost/10) + (w_lights*lights_cost/10) + (w_safety*safty_cost/10))
 
 def find_optimal_path_in_range():
     # Find routes with minimum badness to the chosen destination nodes in range of orig
@@ -66,6 +66,12 @@ def find_rout(dest):
     Cycle = route_1+route_2[1:-1]
 
     return Cycle, dest
+
+def update_destination_nodes(Destination_nodes, dest):
+    distance_to_dist = nx.shortest_path_length(graph, dest, weight='length')
+    destinations_to_remove = [key for key, val in distance_to_dist.items() if val<200]
+    Destination_nodes = list(filter(lambda x: x not in destinations_to_remove, Destination_nodes))
+    return Destination_nodes
 
 def folium_plot(Cycle, dest):
     Location_orig= [graph.nodes[orig]['y'], graph.nodes[orig]['x']]
@@ -116,21 +122,27 @@ G_simple = ox.graph_from_address(address, dist=50, network_type='walk')
 orig = list(G_simple.nodes)[0]
 
 address_state.text("Found the address!")
+
 st.text("")
-st.text("Safety is my first priority. What do you prioritize?")
-
-col1, col2 = st.columns(2)
-
-with col1:
-    w_safety           = st.slider('From 1 to 10 how much do you prioritize safty of the route?', 1, 10, 7)
-    w_parks           = st.slider('From 1 to 10 how much do you prioritize the green space?', 1, 10, 5)
-    w_lights   = st.slider('From 1 to 10 how much do you prioritize avoiding traffic lights?', 1, 10, 5)
+st.text("")
 
 # Get running distance as number_input
 Running_length = st.number_input(label = 'Desired Running Distance (in miles)', min_value = 0.5, value = 3.0, step = 0.5, format="%.1f")
 st.write('The current desired running distance is', Running_length, 'miles')
 # convert running distanc to m
 Running_Dist = Running_length * 1.60934 * 1000 / 2
+
+st.text("")
+st.text("")
+
+st.text("Safety is my first priority. What do you prioritize?")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    w_safety   = st.slider('From 1 to 10 how much do you prioritize safty of the route?', 1, 10, 7)
+    w_parks    = st.slider('From 1 to 10 how much do you prioritize the green space?', 1, 10, 5)
+    w_lights   = st.slider('From 1 to 10 how much do you prioritize avoiding traffic lights?', 1, 10, 5)
 
 ################################################# find routes ##################################################
 
@@ -156,7 +168,7 @@ route1_state.text('Found a great route :)')
 ################################################# find route2 ##################################################
 route2_state = st.text('Finding routes...')
 
-Destination_nodes.remove(dest1)
+Destination_nodes = update_destination_nodes(Destination_nodes, dest1)
 dest2 = find_optimal_path_in_range()[0]
 Cycle2, dest2 = find_rout(dest2)
 cycle_graph_map2 = folium_plot(Cycle2, dest2)
@@ -166,7 +178,7 @@ route2_state.text("Here's another route")
 ################################################# find route3 ##################################################
 route3_state = st.text('Finding routes...')
 
-Destination_nodes.remove(dest2)
+Destination_nodes = update_destination_nodes(Destination_nodes, dest2)
 dest3 = find_optimal_path_in_range()[0]
 Cycle3, dest3 = find_rout(dest3)
 cycle_graph_map3 = folium_plot(Cycle3, dest3)
