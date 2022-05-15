@@ -1,4 +1,5 @@
 import streamlit as st
+from PIL import Image
 import dill
 
 import networkx as nx
@@ -27,7 +28,7 @@ def weighted_sum(point1, point2, atr):
     # normalize the populairy by multiplying by length
     w_l = (atr[0]['length'])/2775 # length weight
 
-    return  length_cost + w_l*(pop_cost + (w_parks*parks_cost/10) + (w_lights*lights_cost/10) + (w_safety*safty_cost/10))
+    return  length_cost + w_l*(pop_cost + ((w_parks**2)*parks_cost) + ((w_lights**2)*lights_cost) + ((w_safety**2)*safty_cost))
 
 def find_optimal_path_in_range():
     # Find routes with minimum badness to the chosen destination nodes in range of orig
@@ -38,7 +39,7 @@ def find_optimal_path_in_range():
 
     return Final_Destination_nodes
 
-def find_rout(dest):
+def find_route(dest):
     while True:
         # find the path to dest that minimises length
         route_1 = nx.shortest_path(graph, orig, dest, weight=weighted_sum)
@@ -57,16 +58,16 @@ def find_rout(dest):
 
         Destination_nodes.remove(dest)
         dest = find_optimal_path_in_range()[0]
-        find_rout(dest)
+        find_route(dest)
 
     graph2.add_edges_from(edges_to_remove)
     for edge in edges_to_remove:
         graph.add_edge(*edge, key=0, popularity_pred = graph.get_edge_data(*edge)[0]['popularity_pred']-3)
-    # Route
+    # route
     Cycle = route_1+route_2[1:-1]
 
     # update the graph to discourage repetittion
-    edges_to_update = [(u,v) for (u,v,edg) in graph2.edges(data=True) if (u in Cycle[2:-2] or v in route_1[2:-2])]
+    edges_to_update = [(u,v) for (u,v,edg) in graph2.edges(data=True) if (u in Cycle[2:-2] or v in Cycle[2:-2])]
 
     return Cycle, dest
 
@@ -84,73 +85,73 @@ def folium_plot(Cycle, dest):
     crime_index = nx.path_weight(graph, Cycle, weight="crime")/length
     cross       = nx.path_weight(graph, Cycle, weight="trafic signals")
 
-    html_orig=  "<p> <b> <small> Start Point </small> </b> </p>"
-
-    html_dest=  f"""
-                <p> <b> <small> Destination Point </small> </b> </p>
-                <p> <small> Route Length:{length:.2f} miles </small> </p>
+    html_orig=  f"""
+                <p> <b> <small> Start Point </small> </b> </p>
+                <p> <small> route Length:{length:.2f} miles </small> </p>
                 <p> <small> Crime Index:{crime_index:.2f} </small> </p>
                 <p> <small> Traffic Signals: {int(cross/2):.0f} </small> </p>
                 """
 
-    iframe_orig = folium.IFrame(html=html_orig, width=150, height=50)
+    html_dest=  f"""
+                <p> <b> <small> Destination Point </small> </b> </p>
+                <p> <small> route Length:{length:.2f} miles </small> </p>
+                <p> <small> Crime Index:{crime_index:.2f} </small> </p>
+                <p> <small> Traffic Signals: {int(cross/2):.0f} </small> </p>
+                """
+
+    iframe_orig = folium.IFrame(html=html_orig, width=150, height=150)
     popup_orig  = folium.Popup(iframe_orig, max_width=150)
 
     iframe_dest = folium.IFrame(html=html_dest, width=150, height=150)
     popup_dest  = folium.Popup(iframe_dest, max_width=150)
 
-    marker_orig = folium.Marker(location = Location_orig, popup = popup_orig, icon = folium.Icon(color='green'))
+    marker_orig = folium.Marker(location = Location_orig, popup = popup_orig, icon = folium.Icon(color='red'))
     marker_dest = folium.Marker(location = Location_dest, popup = popup_dest, icon = folium.Icon(color='red'))
 
     cycle_graph_map = ox.plot_route_folium(graph, Cycle, color='lightgreen',opacity=0.8, weight=8)
 
     marker_orig.add_to(cycle_graph_map)
-    marker_dest.add_to(cycle_graph_map)
+    #marker_dest.add_to(cycle_graph_map)
 
     return cycle_graph_map
 ###############################################################################################################
 
 st.title('RunLikeU')
-
 graph_orig = load_graph()
 
 ################################################# User Inputs ##################################################
 
-# Get street address as text_input
-address = st.text_input('Start Location (currently only avaiable in San Francisco)', 'Haight-Ashbury, San Francisco, CA, USA')
+with st.sidebar:
+    image = Image.open('./App/logo_sidebar.png')
+    col1, col2, col3 = st.columns([1,5,1])
+    with col2:
+        st.image(image)
+
+
+    # Get street address as text_input
+    #address = st.text_input('Start Location (currently only avaiable in San Francisco)', 'Haight-Ashbury, San Francisco, CA, USA')
+    st.markdown('Currently only avaiable in San Francisco')
+    address = st.text_input('Start Location', 'Market & 7th street, San Francisco, CA')
+
+    # find the origin node index
+    G_simple = ox.graph_from_address(address, dist=50, network_type='walk')
+    orig = list(G_simple.nodes)[0]
+
+    # Get running distance as number_input
+    Running_length = st.number_input(label = 'Desired Running Distance (in miles)', min_value = 0.5, value = 3.0, step = 0.5, format="%.1f")
+    # convert running distanc to m
+    Running_Dist = Running_length * 1.60934 * 1000 / 2
+
+    st.markdown("Priorities")
+
+    w_safety   = st.slider('How much do you prioritize safty of the route?', 0, 10, 7)
+    w_parks    = st.slider('How much do you prioritize the green space?', 0, 10, 5)
+    w_lights   = st.slider('How much do you prioritize avoiding traffic lights?', 0, 10, 5)
+
 st.write('The current start location is', address)
-
-address_state = st.text('Finding location...')
-
-# find the origin node index
-G_simple = ox.graph_from_address(address, dist=50, network_type='walk')
-orig = list(G_simple.nodes)[0]
-
-address_state.text("Found the address!")
-
-st.text("")
-st.text("")
-
-# Get running distance as number_input
-Running_length = st.number_input(label = 'Desired Running Distance (in miles)', min_value = 0.5, value = 3.0, step = 0.5, format="%.1f")
 st.write('The current desired running distance is', Running_length, 'miles')
 
-# convert running distanc to m
-Running_Dist = Running_length * 1.60934 * 1000 / 2
-
-st.text("")
-st.text("")
-
-st.markdown("Safety is my first priority. What do you prioritize?")
-
-col1, col2 = st.columns(2)
-
-with col1:
-    w_safety   = st.slider('From 1 to 10 how much do you prioritize safty of the route?', 1, 10, 7)
-    w_parks    = st.slider('From 1 to 10 how much do you prioritize the green space?', 1, 10, 5)
-    w_lights   = st.slider('From 1 to 10 how much do you prioritize avoiding traffic lights?', 1, 10, 5)
-
-if st.button('Find Routs'):
+if st.button('Find Routes'):
      graph = graph_orig.copy()
      ################################################# find routes ##################################################
 
@@ -168,7 +169,7 @@ if st.button('Find Routs'):
      dest1 = Final_Destination_nodes[0]
 
      ################################################# find route1 ##################################################
-     Cycle1, dest1 = find_rout(dest1)
+     Cycle1, dest1 = find_route(dest1)
      cycle_graph_map1 = folium_plot(Cycle1, dest1)
      folium_static(cycle_graph_map1,height= 300)
      route1_state.text('Found a great route :)')
@@ -176,7 +177,7 @@ if st.button('Find Routs'):
      route2_state = st.text('Finding routes...')
      Destination_nodes = update_destination_nodes(Destination_nodes, dest1)
      dest2 = find_optimal_path_in_range()[0]
-     Cycle2, dest2 = find_rout(dest2)
+     Cycle2, dest2 = find_route(dest2)
      cycle_graph_map2 = folium_plot(Cycle2, dest2)
      folium_static(cycle_graph_map2, height= 300)
      route2_state.text("Here's another route")
@@ -184,7 +185,7 @@ if st.button('Find Routs'):
      route3_state = st.text('Finding routes...')
      Destination_nodes = update_destination_nodes(Destination_nodes, dest2)
      dest3 = find_optimal_path_in_range()[0]
-     Cycle3, dest3 = find_rout(dest3)
+     Cycle3, dest3 = find_route(dest3)
      cycle_graph_map3 = folium_plot(Cycle3, dest3)
      folium_static(cycle_graph_map3, height= 300)
      route3_state.text("How about this one?")
