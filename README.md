@@ -10,12 +10,12 @@ Runners like to explore different routes. Having this option helps to keep them 
 At the heart of this problem is a weighted graph of the city of San Francisco that stores data relevant to running on each edge (i.e., each street segment). To create this graph, two main sources of data were used:
  
 1. Structured data from publicly available sources:
-  - Geographic data form OpenStreetMap API
-  - Population data from US 2020 Census API
-  - Crime data from San Francisco Police Department Incident Reports
+  + Geographic data form OpenStreetMap API
+  + Population data from US 2020 Census API
+  + Crime data from San Francisco Police Department Incident Reports
 
 2. Data scraped from online review sources:
-  - Running Popularity data based on posts on MapMyRun
+  + Running Popularity data based on posts on MapMyRun
 
 The first challenge was combining data from different sources. I used the latitude and longitude coordinates to join the datasets using nearest nodes. The rest of the project can be split to two parts:
 
@@ -26,9 +26,7 @@ To solve the first problem, I used the Random-Forst Regressor to predict the “
 
 I used this predicted popularity index along with other features, to recommend routes. To this end, I found all the nodes in the ranges of users’s desired running distance and found the routes that optimized the cost function bellow:
 
- Cost Function =    (length cost)-(predicted popularity reward)   
-+ (crime cost)× (user_preference)- (parks reward)×(user_preference) 
- + (traffic lights cost)×(user_preference) 
+ Cost Function =    (length cost)-(predicted popularity reward) + (crime cost)× (user_preference)- (parks reward)×(user_preference) + (traffic lights cost)×(user_preference) 
 
 ## Deliverables
 bit.ly/RunLikeU
