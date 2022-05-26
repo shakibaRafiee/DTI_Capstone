@@ -6,7 +6,7 @@ This project aims to design a web application that recommends running routes to 
 ## Problem Statement
 Runners like to explore different routes. Having this option helps to keep them motivated. There are a few apps with similar functionality in the market. However, they heavily rely on online reviews to generate routes; therefore, they miss crucial features that people do not post online, e.g., safety. This project aims to combine crowdsourced data with additional data, e.g., safety, to recommend running routes to users. 
 
-##Project
+## Project
 At the heart of this problem is a weighted graph of the city of San Francisco that stores data relevant to running on each edge (i.e., each street segment). To create this graph, two main sources of data were used:
  
 1. Structured data from publicly available sources:
