@@ -8,7 +8,7 @@ import osmnx as ox
 import folium
 from streamlit_folium import folium_static
 
-################################################## function ###################################################
+################################################## function ####################################################
 
 @st.cache(allow_output_mutation=True)
 def load_graph():
