@@ -73,7 +73,7 @@ def find_route(dest):
 
 def update_destination_nodes(Destination_nodes, dest):
     distance_to_dist = nx.shortest_path_length(graph, dest, weight='length')
-    destinations_to_remove = [key for key, val in distance_to_dist.items() if val<200]
+    destinations_to_remove = [key for key, val in distance_to_dist.items() if val<100]
     Destination_nodes = list(filter(lambda x: x not in destinations_to_remove, Destination_nodes))
     return Destination_nodes
 
