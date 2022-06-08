@@ -73,7 +73,7 @@ def find_route(dest):
 
 def update_destination_nodes(Destination_nodes, dest):
     distance_to_dist = nx.shortest_path_length(graph, dest, weight='length')
-    destinations_to_remove = [key for key, val in distance_to_dist.items() if val<100]
+    destinations_to_remove = [key for key, val in distance_to_dist.items() if val<150]
     Destination_nodes = list(filter(lambda x: x not in destinations_to_remove, Destination_nodes))
     return Destination_nodes
 
@@ -131,7 +131,7 @@ with st.sidebar:
     # Get street address as text_input
     #address = st.text_input('Start Location (currently only avaiable in San Francisco)', 'Haight-Ashbury, San Francisco, CA, USA')
     st.markdown('Currently only avaiable in San Francisco')
-    address = st.text_input('Start Location', 'Haight-Ashbury, San Francisco, CA')
+    address = st.text_input('Start Location', 'Market Street & 7th Street, San Francisco, CA')
 
     # find the origin node index
     G_simple = ox.graph_from_address(address, dist=50, network_type='walk')
